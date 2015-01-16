@@ -9,26 +9,24 @@ module ThemesOnRails
 
         controller_class.send(filter_method, options) do |controller|
 
-          # initialize
-          instance = ThemesOnRails::ActionController.new(controller, theme)
-
           # set layout
           controller_class.layout('application', options)
 
+          # initialize
+          theme_instance = ThemesOnRails::ActionController.new(controller, theme)
+
           # prepend view path
-          controller.prepend_view_path instance.theme_view_path
+          controller.prepend_view_path theme_instance.theme_view_path
+
+          # liquid file system
+          Liquid::Template.file_system = Liquid::Rails::FileSystem.new(theme_instance.theme_view_path) if defined?(Liquid::Rails)
         end
       end
 
       private
 
         def before_filter_method(options)
-          case Rails::VERSION::MAJOR
-          when 3
-            options.delete(:prepend) ? :prepend_before_filter : :before_filter
-          when 4
-            options.delete(:prepend) ? :prepend_before_action : :before_action
-          end
+          options.delete(:prepend) ? :prepend_before_action : :before_action
         end
     end
 
